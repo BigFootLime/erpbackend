@@ -66,39 +66,47 @@ router.post("/login", async (req, res) => {
 
 //**********************************************RESET PASSWORD SECTION************************************************* */
 router.post("/request-password-reset", async (req, res) => {
-  const { username } = req.body;
-  console.log("username", username);
+  const { email } = req.body;
+  console.log(req.body);
+
   try {
     const result = await db.query(
-      "SELECT * FROM EMPLOYEE WHERE USERNAME = $1",
-      [username]
+      "SELECT * FROM EMPLOYEE WHERE pro_email_address = $1",
+      [email]
     );
     const user = result.rows[0];
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    const recoveryCode = crypto.randomBytes(20).toString("hex");
+    const recoveryCode = Math.floor(
+      10000000 + Math.random() * 90000000
+    ).toString();
     const hashedCode = await bcrypt.hash(recoveryCode, 10);
 
     await db.query(
-      "UPDATE EMPLOYEE SET RECOVERY_CODE = $1 WHERE USERNAME = $2",
-      [hashedCode, username]
+      "UPDATE EMPLOYEE SET RECOVERY_CODE = $1 WHERE pro_email_address = $2",
+      [hashedCode, email]
     );
 
     // Configure nodemailer
     const transporter = nodemailer.createTransport({
-      service: "GMAIL",
+      host: "smtp.office365.com",
+      port: 587,
+      secure: false, // true for 465, false for other ports
       auth: {
-        user: "kesmartin2004@gmail.com",
-        pass: "itsbiggerontheinside",
+        user: process.env.OUTLOOK_USER,
+        pass: process.env.OUTLOOK_PASS,
+      },
+      tls: {
+        ciphers: "SSLv3",
       },
     });
 
     const mailOptions = {
-      from: "kesmartin2004@gmail.com",
-      to: user.PRO_EMAIL_ADDRESS,
+      from: process.env.OUTLOOK_USER,
+      to: user.pro_email_address,
       subject: "Password Recovery",
       text: `Your recovery code is: ${recoveryCode}`,
     };
