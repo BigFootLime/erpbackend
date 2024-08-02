@@ -20,6 +20,65 @@ router.get("/users", async (req, res) => {
   }
 });
 
+router.get("/user-photo", async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    const result = await db.query(
+      "SELECT name, firstname, photo FROM EMPLOYEE WHERE id_employee = $1",
+      [decoded.id]
+    );
+    const user = result.rows[0];
+
+    if (!user || !user.photo) {
+      return res.status(404).json({ error: "Photo not found" });
+    }
+
+    // Convert bytea data to base64
+    const base64Photo = Buffer.from(user.photo).toString("base64");
+
+    res.json({
+      firstname: user.name,
+      surname: user.firstname,
+      photo: base64Photo,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/user-details", async (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+  // console.log(token);
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, jwtSecret);
+    const result = await db.query(
+      "SELECT username FROM EMPLOYEE WHERE id_employee = $1",
+      [decoded.id]
+    );
+    const user = result.rows[0];
+    console.log(user);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({ username: user.username });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Route to create a new user
 router.post("/users", async (req, res) => {
   const { username, password, email, firstName, lastName, role, status } =
@@ -48,13 +107,13 @@ router.post("/login", async (req, res) => {
 
     if (user && (await bcrypt.compare(password, user.password))) {
       const token = jwt.sign(
-        { id: user.id, username: user.username },
+        { id: user.id_employee, username: user.username },
         jwtSecret,
         {
           expiresIn: "1h",
         }
       );
-      res.json({ token });
+      res.json({ token, userId: user.id_employee }); // Ensure this field exists and is correctly referenced
     } else {
       res.status(401).json({ error: "Invalid username or password" });
     }
@@ -80,9 +139,7 @@ router.post("/request-password-reset", async (req, res) => {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    const recoveryCode = Math.floor(
-      10000000 + Math.random() * 90000000
-    ).toString();
+    const recoveryCode = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedCode = await bcrypt.hash(recoveryCode, 10);
 
     await db.query(
@@ -121,11 +178,12 @@ router.post("/request-password-reset", async (req, res) => {
 });
 
 router.post("/verify-recovery-code", async (req, res) => {
-  const { username, recoveryCode } = req.body;
+  const { recoveryCode, email } = req.body;
+
   try {
     const result = await db.query(
-      "SELECT * FROM EMPLOYEE WHERE USERNAME = $1",
-      [username]
+      "SELECT * FROM EMPLOYEE WHERE PRO_EMAIL_ADDRESS = $1",
+      [email]
     );
     const user = result.rows[0];
 
@@ -133,7 +191,13 @@ router.post("/verify-recovery-code", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const isCodeValid = await bcrypt.compare(recoveryCode, user.RECOVERY_CODE);
+    if (!user.recovery_code) {
+      return res
+        .status(400)
+        .json({ error: "Recovery code is not set for this user" });
+    }
+
+    const isCodeValid = await bcrypt.compare(recoveryCode, user.recovery_code);
     if (!isCodeValid) {
       return res.status(401).json({ error: "Invalid recovery code" });
     }
@@ -145,13 +209,14 @@ router.post("/verify-recovery-code", async (req, res) => {
   }
 });
 
+// Reset Password Endpoint
 router.post("/reset-password", async (req, res) => {
-  const { username, newPassword } = req.body;
+  const { newPassword, email } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await db.query(
-      "UPDATE EMPLOYEE SET PASSWORD = $1, RECOVERY_CODE = NULL WHERE USERNAME = $2",
-      [hashedPassword, username]
+      "UPDATE EMPLOYEE SET PASSWORD = $1, RECOVERY_CODE = NULL WHERE PRO_EMAIL_ADDRESS = $2",
+      [hashedPassword, email]
     );
     res.json({ message: "Password updated successfully" });
   } catch (err) {
