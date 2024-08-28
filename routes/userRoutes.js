@@ -67,7 +67,6 @@ router.get("/user-details", async (req, res) => {
       [decoded.id]
     );
     const user = result.rows[0];
-    console.log(user);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }

@@ -1,8 +1,12 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors"); // Import cors middleware
-const userRoutes = require("./routes/userRoutes");
+const cors = require("cors");
 const helmet = require("helmet");
+const compression = require("compression");
+
+const clientRoutes = require("./routes/clientRoutes");
+const devisRoutes = require("./routes/devisRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -13,14 +17,10 @@ app.use(cors());
 // Middleware to parse JSON bodies
 app.use(bodyParser.json());
 
-// Simple root route
-app.get("/", (req, res) => {
-  res.send("Welcome to the User Management API");
-});
+// Middleware to compress responses
+app.use(compression());
 
-// Use the user routes
-app.use("/api", userRoutes);
-
+// Security middleware
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
@@ -29,6 +29,22 @@ app.use(
     },
   })
 );
+
+// Simple root route
+app.get("/", (req, res) => {
+  res.send("Welcome to the User Management API");
+});
+
+// Use the client and devis routes
+app.use("/api", clientRoutes);
+app.use("/api", devisRoutes);
+app.use("/api", userRoutes);
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something broke!");
+});
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
