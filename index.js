@@ -7,6 +7,7 @@ const compression = require("compression");
 const clientRoutes = require("./routes/clientRoutes");
 const devisRoutes = require("./routes/devisRoutes");
 const userRoutes = require("./routes/userRoutes");
+const supplierRoutes = require("./routes/supplierRoutes");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -39,6 +40,7 @@ app.get("/", (req, res) => {
 app.use("/api", clientRoutes);
 app.use("/api", devisRoutes);
 app.use("/api", userRoutes);
+app.use("/api", supplierRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

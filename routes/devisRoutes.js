@@ -13,7 +13,6 @@ router.get("/devis", async (req, res) => {
       JOIN Client ON Devis.client_id = Client.client_id
     `);
     res.json(result.rows);
-    console.log(result.rows);
   } catch (error) {
     console.error(error);
     res.status(500).send("Erreur lors de la récupération des devis");

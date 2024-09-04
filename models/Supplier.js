@@ -1,15 +1,15 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../database");
 
-const Client = sequelize.define(
-  "Client",
+const Fournisseur = sequelize.define(
+  "Fournisseur",
   {
-    client_id: {
+    fournisseur_id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    nom: {
+    nom_societe: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -20,12 +20,6 @@ const Client = sequelize.define(
       type: DataTypes.STRING,
     },
     adresse_ligne_3: {
-      type: DataTypes.STRING,
-    },
-    adresse_ligne_4: {
-      type: DataTypes.STRING,
-    },
-    siret: {
       type: DataTypes.STRING,
     },
     localite: {
@@ -46,28 +40,22 @@ const Client = sequelize.define(
     telecopie: {
       type: DataTypes.STRING,
     },
+    contact_principal: {
+      type: DataTypes.STRING,
+    },
     compte_tiers: {
       type: DataTypes.STRING,
     },
     reglement: {
       type: DataTypes.STRING,
     },
-    groupe_financier: {
-      type: DataTypes.STRING,
-    },
-    rue: {
-      type: DataTypes.STRING,
-    },
-    ville: {
-      type: DataTypes.STRING,
-    },
-    contact_principal: {
-      type: DataTypes.STRING,
-    },
-    type_client: {
+    siret: {
       type: DataTypes.STRING,
     },
     secteur_activite: {
+      type: DataTypes.STRING,
+    },
+    type_fournisseur: {
       type: DataTypes.STRING,
     },
     date_creation: {
@@ -76,32 +64,29 @@ const Client = sequelize.define(
     statut: {
       type: DataTypes.STRING,
     },
-    numero_client: {
+    numero_fournisseur: {
       type: DataTypes.STRING,
     },
-    condition_de_paiement: {
+    conditions_de_paiement: {
       type: DataTypes.TEXT,
     },
-    type_remise: {
-      type: DataTypes.STRING,
-    },
-    remise: {
-      type: DataTypes.DECIMAL(5, 2),
+    delai_livraison_standard: {
+      type: DataTypes.INTERVAL,
     },
     solde_compte: {
       type: DataTypes.DECIMAL(10, 2),
     },
-    date_dernier_achat: {
-      type: DataTypes.DATE,
+    classement: {
+      type: DataTypes.STRING(10),
     },
     notes: {
       type: DataTypes.TEXT,
     },
   },
   {
-    tableName: "Client",
+    tableName: "Fournisseur",
     timestamps: false,
   }
 );
 
-module.exports = Client;
+module.exports = Fournisseur;
